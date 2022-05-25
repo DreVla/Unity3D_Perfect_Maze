@@ -12,29 +12,21 @@ public class GridScript : MonoBehaviour
     public Transform[,] Grid;
 
     // list used for Prim's algorithm, empty at start
-    // http://en.wikipedia.org/wiki/Prim%27s_algorithm
     public List<Transform> Set;
 
 
     //  AdjSet{
-    //       [ 0 ] is a list of all the cells
-    //         that have a weight of 0, and are
-    //         adjacent to the cells in Set.
-    //       [ 1 ] is a list of all the cells
-    //         that have a weight of 1, and are
-    //         adjacent to the cells in Set.
-    //       [ 2 ] is a list of all the cells
-    //         that have a weight of 2, and are
-    //         adjacent to the cells in Set.
-    //     etc...
-    //       [ 9 ] is a list of all the cells
-    //         that have a weight of 9, and are
-    //         adjacent to the cells in Set.
+    //       [ 0 ] all adjacent cell with weight 0
+    //       [ 1 ] all adjacent cell with weight 1
+    //...
+    //       [ 9 ] all adjacent cell with weight 9
     //  }
     public List<List<Transform>> AdjSet;
 
+    private GameManager GameManager;
     void Start()
     {
+        GameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         CreateGrid();
         SetRandomWeights();
         SetAdjacents();
@@ -208,6 +200,9 @@ public class GridScript : MonoBehaviour
                         cell.GetComponentInChildren<TextMesh>().text = "";
                     }
                 }
+                CreateMazeEdges();
+                // after generation is done, this bool will allow user to move throught the maze
+                GameManager.SetIsGenerationDone(true);
                 return;
             }
             // if not done, find first element in smallest adjacency sub list
@@ -221,5 +216,51 @@ public class GridScript : MonoBehaviour
         AddToSet(nextCell);
         // Recursively call this function
         Invoke("FindNext", 0);
+    }
+
+    private void CreateMazeEdges()
+    {
+        int xMarginLeft = -1;
+        int xMarginRight = (int)Size.x;
+        for (int z = -1; z < Size.z + 1; z++)
+        {
+            Transform marginCellLeft, marginCellRight;
+            Vector3 posToInstantiateLeft = new Vector3(xMarginLeft, 1, z);
+            Vector3 posToInstantiateRight = new Vector3(xMarginRight, 1, z);
+            marginCellLeft = (Transform)Instantiate(CellPrefab, posToInstantiateLeft, Quaternion.identity);
+            marginCellRight = (Transform)Instantiate(CellPrefab, posToInstantiateRight, Quaternion.identity);
+            // set cell parent the grid game object so hierarchy is cleaner
+            marginCellLeft.parent = transform;
+            marginCellRight.parent = transform;
+            // set name of gameobject to its' actual position
+            marginCellLeft.name = string.Format("({0},{1})", xMarginLeft, z);
+            marginCellLeft.GetComponent<CellScript>().Position = posToInstantiateLeft;
+            marginCellLeft.GetComponentInChildren<TextMesh>().text = "";
+
+            marginCellRight.name = string.Format("({0},{1})", xMarginRight, z);
+            marginCellRight.GetComponent<CellScript>().Position = posToInstantiateRight;
+            marginCellRight.GetComponentInChildren<TextMesh>().text = "";
+        }
+        int yMarginBottom = -1;
+        int yMarginTop = (int) Size.z;
+        for (int x = -1; x < Size.x + 1; x++)
+        {
+            Transform marginCellBottom, marginCellTop;
+            Vector3 posToInstantiateBottom = new Vector3(x, 1, yMarginBottom);
+            Vector3 posToInstantiateTop = new Vector3(x, 1, yMarginTop);
+            marginCellBottom = (Transform)Instantiate(CellPrefab, posToInstantiateBottom, Quaternion.identity);
+            marginCellTop = (Transform)Instantiate(CellPrefab, posToInstantiateTop, Quaternion.identity);
+            // set cell parent the grid game object so hierarchy is cleaner
+            marginCellBottom.parent = transform;
+            marginCellTop.parent = transform;
+            // set name of gameobject to its' actual position
+            marginCellBottom.name = string.Format("({0},{1})", x, yMarginBottom);
+            marginCellBottom.GetComponent<CellScript>().Position = posToInstantiateBottom;
+            marginCellBottom.GetComponentInChildren<TextMesh>().text = "";
+
+            marginCellTop.name = string.Format("({0},{1})", x, yMarginTop);
+            marginCellTop.GetComponent<CellScript>().Position = posToInstantiateTop;
+            marginCellTop.GetComponentInChildren<TextMesh>().text = "";
+        }
     }
 }
