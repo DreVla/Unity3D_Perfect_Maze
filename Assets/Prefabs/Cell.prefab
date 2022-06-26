@@ -207,3 +207,4 @@ MonoBehaviour:
   Adjacents: []
   Position: {x: 0, y: 0, z: 0}
   Weight: 0
+  AdjacentsOpened: 0

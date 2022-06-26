@@ -21,10 +21,6 @@ public class FirstPersonController : MonoBehaviour
     void Start()
     {
         characterController = GetComponent<CharacterController>();
-
-        // Lock cursor
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
 
     void Update()
@@ -48,5 +44,15 @@ public class FirstPersonController : MonoBehaviour
             playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
             transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed, 0);
         }
+    }
+
+    public void disableMovement()
+    {
+        canMove = false;
+    }
+
+    public void enableMovement()
+    {
+        canMove = true;
     }
 }

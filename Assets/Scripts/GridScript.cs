@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GridScript : MonoBehaviour
 {
-    public Transform CellPrefab;
+    public Transform cellPrefab;
+    public Material wallMaterial, floorMaterial, entranceMaterial, exitMaterial;
     // size of the grid
     public Vector3 Size;
     // using 2d matrix to easily get to certain position in grid instead of using list 
@@ -23,18 +25,15 @@ public class GridScript : MonoBehaviour
     //  }
     public List<List<Transform>> AdjSet;
 
-    private GameManager GameManager;
+    public InputField heightInput, widthInput;
+    public Button generateButton, startPlayButton;
+    public float height, width;
     void Start()
     {
-        GameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        CreateGrid();
-        SetRandomWeights();
-        SetAdjacents();
-        SetStart(Grid[0,0]); 
-
-        // reccursively look for lowest weight adjacent to all the cells in the set.
-        // if cell has two open neighbours, is disqualified
-        FindNext();
+        heightInput.gameObject.SetActive(true);
+        widthInput.gameObject.SetActive(true);
+        generateButton.gameObject.SetActive(true);
+        startPlayButton.gameObject.SetActive(false);
     }
 
     private void Update()
@@ -43,6 +42,24 @@ public class GridScript : MonoBehaviour
         {
             SceneManager.LoadScene(0);
         }
+    }
+
+    public void StartGeneration()
+    {
+        height = float.Parse(heightInput.text);
+        width = float.Parse(widthInput.text);
+        heightInput.gameObject.SetActive(false);
+        widthInput.gameObject.SetActive(false);
+        generateButton.gameObject.SetActive(false);
+        Size.Set(width, 10, height);
+        CreateGrid();
+        SetRandomWeights();
+        SetAdjacents();
+        SetStart(Grid[0, 0]);
+
+        // reccursively look for lowest weight adjacent to all the cells in the set.
+        // if cell has two open neighbours, is disqualified
+        FindNext();
     }
 
     // Create grid here
@@ -56,7 +73,7 @@ public class GridScript : MonoBehaviour
             {
                 Transform newCell;
                 Vector3 posToInstantiate = new Vector3(x, 0, z);
-                newCell = (Transform) Instantiate(CellPrefab, posToInstantiate, Quaternion.identity);
+                newCell = (Transform) Instantiate(cellPrefab, posToInstantiate, Quaternion.identity);
                 // set cell parent the grid game object so hierarchy is cleaner
                 newCell.parent = transform;
                 // set name of gameobject to its' actual position
@@ -136,7 +153,7 @@ public class GridScript : MonoBehaviour
             AdjSet.Add(new List<Transform>());
         }
         // set green color to start
-        Grid[0, 0].GetComponent<Renderer>().material.color = Color.green;
+        Grid[0, 0].GetComponent<Renderer>().material = entranceMaterial;
         Grid[0, 0].GetComponentInChildren<TextMesh>().text = "";
         AddToSet(Grid[0, 0]);
     }
@@ -189,20 +206,21 @@ public class GridScript : MonoBehaviour
                 Debug.Log("We're Done, " + Time.timeSinceLevelLoad + " seconds taken");
                 CancelInvoke("FindNext");
                 // exit is last cell opened, mark it red
-                Set[Set.Count - 1].GetComponent<Renderer>().material.color = Color.red;
+                Set[Set.Count - 1].GetComponent<Renderer>().material = exitMaterial;
                 // every cell that is not opened is moved up and colored black so they will be walls
                 foreach (Transform cell in Grid)
                 {
                     if (!Set.Contains(cell))
                     {
                         cell.Translate(Vector3.up);
-                        cell.GetComponent<Renderer>().material.color = Color.black;
+                        cell.GetComponent<Renderer>().material = wallMaterial;
                         cell.GetComponentInChildren<TextMesh>().text = "";
                     }
                 }
                 CreateMazeEdges();
                 // after generation is done, this bool will allow user to move throught the maze
-                GameManager.SetIsGenerationDone(true);
+
+                startPlayButton.gameObject.SetActive(true);
                 return;
             }
             // if not done, find first element in smallest adjacency sub list
@@ -211,7 +229,7 @@ public class GridScript : MonoBehaviour
             // remove this 'next' variable from AdjSet.
             AdjSet[lowestList].Remove(nextCell);
         } while (nextCell.GetComponent<CellScript>().AdjacentsOpened >= 2);
-        nextCell.GetComponent<Renderer>().material.color = Color.white;
+        nextCell.GetComponent<Renderer>().material = floorMaterial; 
         nextCell.GetComponentInChildren<TextMesh>().text = "";
         AddToSet(nextCell);
         // Recursively call this function
@@ -227,8 +245,8 @@ public class GridScript : MonoBehaviour
             Transform marginCellLeft, marginCellRight;
             Vector3 posToInstantiateLeft = new Vector3(xMarginLeft, 1, z);
             Vector3 posToInstantiateRight = new Vector3(xMarginRight, 1, z);
-            marginCellLeft = (Transform)Instantiate(CellPrefab, posToInstantiateLeft, Quaternion.identity);
-            marginCellRight = (Transform)Instantiate(CellPrefab, posToInstantiateRight, Quaternion.identity);
+            marginCellLeft = (Transform)Instantiate(cellPrefab, posToInstantiateLeft, Quaternion.identity);
+            marginCellRight = (Transform)Instantiate(cellPrefab, posToInstantiateRight, Quaternion.identity);
             // set cell parent the grid game object so hierarchy is cleaner
             marginCellLeft.parent = transform;
             marginCellRight.parent = transform;
@@ -236,10 +254,12 @@ public class GridScript : MonoBehaviour
             marginCellLeft.name = string.Format("({0},{1})", xMarginLeft, z);
             marginCellLeft.GetComponent<CellScript>().Position = posToInstantiateLeft;
             marginCellLeft.GetComponentInChildren<TextMesh>().text = "";
+            marginCellLeft.GetComponent<Renderer>().material = wallMaterial;
 
             marginCellRight.name = string.Format("({0},{1})", xMarginRight, z);
             marginCellRight.GetComponent<CellScript>().Position = posToInstantiateRight;
             marginCellRight.GetComponentInChildren<TextMesh>().text = "";
+            marginCellRight.GetComponent<Renderer>().material = wallMaterial;
         }
         int yMarginBottom = -1;
         int yMarginTop = (int) Size.z;
@@ -248,8 +268,8 @@ public class GridScript : MonoBehaviour
             Transform marginCellBottom, marginCellTop;
             Vector3 posToInstantiateBottom = new Vector3(x, 1, yMarginBottom);
             Vector3 posToInstantiateTop = new Vector3(x, 1, yMarginTop);
-            marginCellBottom = (Transform)Instantiate(CellPrefab, posToInstantiateBottom, Quaternion.identity);
-            marginCellTop = (Transform)Instantiate(CellPrefab, posToInstantiateTop, Quaternion.identity);
+            marginCellBottom = (Transform)Instantiate(cellPrefab, posToInstantiateBottom, Quaternion.identity);
+            marginCellTop = (Transform)Instantiate(cellPrefab, posToInstantiateTop, Quaternion.identity);
             // set cell parent the grid game object so hierarchy is cleaner
             marginCellBottom.parent = transform;
             marginCellTop.parent = transform;
@@ -257,10 +277,12 @@ public class GridScript : MonoBehaviour
             marginCellBottom.name = string.Format("({0},{1})", x, yMarginBottom);
             marginCellBottom.GetComponent<CellScript>().Position = posToInstantiateBottom;
             marginCellBottom.GetComponentInChildren<TextMesh>().text = "";
+            marginCellBottom.GetComponent<Renderer>().material = wallMaterial;
 
             marginCellTop.name = string.Format("({0},{1})", x, yMarginTop);
             marginCellTop.GetComponent<CellScript>().Position = posToInstantiateTop;
             marginCellTop.GetComponentInChildren<TextMesh>().text = "";
+            marginCellTop.GetComponent<Renderer>().material = wallMaterial;
         }
     }
 }
