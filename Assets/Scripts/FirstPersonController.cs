@@ -28,7 +28,7 @@ public class FirstPersonController : MonoBehaviour
         // We are grounded, so recalculate move direction based on axes
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
-        // Press Left Shift to run
+
         float curSpeedX = canMove ? (walkingSpeed) * Input.GetAxis("Vertical") : 0;
         float curSpeedY = canMove ? (walkingSpeed) * Input.GetAxis("Horizontal") : 0;
         moveDirection = (forward * curSpeedX) + (right * curSpeedY);

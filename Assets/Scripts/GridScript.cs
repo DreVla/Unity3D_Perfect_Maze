@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class GridScript : MonoBehaviour
 {
-    public Transform cellPrefab;
+    public Transform cellPrefab, lampPrefab;
     public Material wallMaterial, floorMaterial, entranceMaterial, exitMaterial;
     // size of the grid
     public Vector3 Size;
@@ -231,6 +231,18 @@ public class GridScript : MonoBehaviour
         } while (nextCell.GetComponent<CellScript>().AdjacentsOpened >= 2);
         nextCell.GetComponent<Renderer>().material = floorMaterial; 
         nextCell.GetComponentInChildren<TextMesh>().text = "";
+        if (Random.value > 0.97) //%3 percent chance to spawn lamp
+        {
+            if (Random.value < 0.5f)
+            {
+                Transform newLamp = (Transform)Instantiate(lampPrefab, new Vector3(nextCell.position.x - 0.4f, 0.5f, nextCell.position.z - 0.4f), Quaternion.identity);
+                newLamp.Rotate(0, 45, 0);
+            } else
+            {
+                Transform newLamp = (Transform)Instantiate(lampPrefab, new Vector3(nextCell.position.x + 0.4f, 0.5f, nextCell.position.z + 0.4f), Quaternion.identity);
+                newLamp.Rotate(0, -135, 0);
+            }
+        }
         AddToSet(nextCell);
         // Recursively call this function
         Invoke("FindNext", 0);
